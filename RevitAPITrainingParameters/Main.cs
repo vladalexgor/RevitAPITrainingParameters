@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.Attributes;
+﻿using Autodesk.Revit.ApplicationServices;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.UI;
@@ -20,24 +21,47 @@ namespace RevitAPITrainingParameters
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document doc = uidoc.Document;
 
-            var selectedRef = uidoc.Selection.PickObject(ObjectType.Element, "Выберите элемент");
-            var selectedElement = doc.GetElement(selectedRef);
-            if(selectedElement is FamilyInstance)
-            {
-                using (Transaction ts = new Transaction(doc, "Set parameters"))
-                {
-                    ts.Start();
-                    var familyInstance = selectedElement as FamilyInstance;
-                    Parameter commentParameter = familyInstance.LookupParameter("Комментарии");
-                    commentParameter.Set("TestComment");
+            var categorySet = new CategorySet();
+            categorySet.Insert(Category.GetCategory(doc, BuiltInCategory.OST_Walls));
+            categorySet.Insert(Category.GetCategory(doc, BuiltInCategory.OST_Doors));
+            categorySet.Insert(Category.GetCategory(doc, BuiltInCategory.OST_Windows));
 
-                    Parameter typeCommentsParameter = familyInstance.Symbol.LookupParameter("Комментарии к типоразмеру");
-                    typeCommentsParameter.Set("TestTypeComments");
-                    ts.Commit();
-                }
+            using (Transaction ts = new Transaction(doc, "Add parameter"))
+            {
+                ts.Start();
+                CreateSharadParameter(uiapp.Application, doc, "TestParameter", categorySet, BuiltInParameterGroup.PG_DATA, true);
+                ts.Commit();
             }
 
             return Result.Succeeded;
+        }
+
+        private void CreateSharadParameter(Application application,
+            Document doc, string parameterName, CategorySet categorySet,
+            BuiltInParameterGroup builtInParameterGroup, bool isInstance)
+        {
+            DefinitionFile definitionFile = application.OpenSharedParameterFile();
+            if (definitionFile == null)
+            {
+                TaskDialog.Show("Ошибка", "Не найден файл общих параметров");
+                return;
+            }
+
+            Definition definition = definitionFile.Groups
+                .SelectMany(group => group.Definitions)
+                .FirstOrDefault(def=>def.Name.Equals(parameterName));
+            if (definition == null)
+            {
+                TaskDialog.Show("Ошибка", "Не найден указанный параметр");
+                return;
+            }
+
+            Binding binding = application.Create.NewTypeBinding(categorySet);
+            if (isInstance)
+                binding = application.Create.NewInstanceBinding(categorySet);
+
+            BindingMap map = doc.ParameterBindings;
+            map.Insert(definition, binding, builtInParameterGroup);
         }
     }
 }
