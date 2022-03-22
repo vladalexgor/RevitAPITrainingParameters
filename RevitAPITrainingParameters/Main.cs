@@ -23,14 +23,14 @@ namespace RevitAPITrainingParameters
             var selectedRef = uidoc.Selection.PickObject(ObjectType.Element, "Выберите элемент");
             var selectedElement = doc.GetElement(selectedRef);
 
-            if (selectedElement is Wall)
+            if(selectedElement is FamilyInstance)
             {
-                Parameter lengthParameter = selectedElement.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
-                if (lengthParameter.StorageType == StorageType.Double)
-                {
-                    double lengthValue = UnitUtils.ConvertFromInternalUnits(lengthParameter.AsDouble(), UnitTypeId.Meters);
-                    TaskDialog.Show("Длина", lengthValue.ToString());
-                }
+                var familyInstance = selectedElement as FamilyInstance;
+                Parameter widthParameter1 = familyInstance.Symbol.LookupParameter("Ширина");
+                TaskDialog.Show("Ширина1", widthParameter1.AsDouble().ToString());
+
+                Parameter widthParameter2 = familyInstance.Symbol.get_Parameter(BuiltInParameter.CASEWORK_WIDTH);
+                TaskDialog.Show("Ширина2", widthParameter2.AsDouble().ToString());
             }
 
             return Result.Succeeded;
