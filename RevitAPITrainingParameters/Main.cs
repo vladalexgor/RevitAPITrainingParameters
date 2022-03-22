@@ -22,15 +22,19 @@ namespace RevitAPITrainingParameters
 
             var selectedRef = uidoc.Selection.PickObject(ObjectType.Element, "Выберите элемент");
             var selectedElement = doc.GetElement(selectedRef);
-
             if(selectedElement is FamilyInstance)
             {
-                var familyInstance = selectedElement as FamilyInstance;
-                Parameter widthParameter1 = familyInstance.Symbol.LookupParameter("Ширина");
-                TaskDialog.Show("Ширина1", widthParameter1.AsDouble().ToString());
+                using (Transaction ts = new Transaction(doc, "Set parameters"))
+                {
+                    ts.Start();
+                    var familyInstance = selectedElement as FamilyInstance;
+                    Parameter commentParameter = familyInstance.LookupParameter("Комментарии");
+                    commentParameter.Set("TestComment");
 
-                Parameter widthParameter2 = familyInstance.Symbol.get_Parameter(BuiltInParameter.CASEWORK_WIDTH);
-                TaskDialog.Show("Ширина2", widthParameter2.AsDouble().ToString());
+                    Parameter typeCommentsParameter = familyInstance.Symbol.LookupParameter("Комментарии к типоразмеру");
+                    typeCommentsParameter.Set("TestTypeComments");
+                    ts.Commit();
+                }
             }
 
             return Result.Succeeded;
