@@ -25,16 +25,11 @@ namespace RevitAPITrainingParameters
 
             if (selectedElement is Wall)
             {
-                Parameter lengthParameter1 = selectedElement.LookupParameter("Длина");
-                if(lengthParameter1.StorageType == StorageType.Double)
+                Parameter lengthParameter = selectedElement.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
+                if (lengthParameter.StorageType == StorageType.Double)
                 {
-                    TaskDialog.Show("Длина1", lengthParameter1.AsDouble().ToString());
-                }
-
-                Parameter lengthParameter2 = selectedElement.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH);
-                if (lengthParameter2.StorageType == StorageType.Double)
-                {
-                    TaskDialog.Show("Длина2", lengthParameter2.AsDouble().ToString());
+                    double lengthValue = UnitUtils.ConvertFromInternalUnits(lengthParameter.AsDouble(), UnitTypeId.Meters);
+                    TaskDialog.Show("Длина", lengthValue.ToString());
                 }
             }
 
